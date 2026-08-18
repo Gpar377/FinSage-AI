@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Zap, PieChart, ShieldCheck, ChevronRight } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function FIREPathPlanner() {
   const [step, setStep] = useState(0);
@@ -33,20 +34,28 @@ export default function FIREPathPlanner() {
         const payload = {
           current_age: parseInt(formData.age),
           target_retirement_age: parseInt(formData.retirementAge),
+          current_income_annual: parseInt(formData.income) * 12,
           monthly_expenses: parseInt(formData.expenses),
-          current_savings: parseInt(formData.mutualFunds) + parseInt(formData.fixedIncome),
+          existing_mf: parseInt(formData.mutualFunds),
+          existing_ppf: parseInt(formData.fixedIncome),
+          target_monthly_draw: parseInt(formData.targetLifestyle),
           expected_inflation: 0.06,
-          expected_return_rate: 0.12,
-          withdrawal_rate: 0.04
+          expected_return_equity: 0.12,
+          swr: 0.04
         };
 
-        const res = await fetch("http://localhost:8000/api/fire/plan", {
+        const res = await fetch(`${getApiUrl()}/api/fire/plan`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
         
+        if (data.error) {
+          console.error("Engine Error:", data.error);
+          return;
+        }
+
         // Mocking some additional UI data for the "ET Prime" feel
         const enrichedData = {
           ...data,
@@ -85,7 +94,7 @@ export default function FIREPathPlanner() {
             </div>
             <div className="bg-white/5 p-4 rounded-sm border border-white/10 text-right">
               <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-1">Target Wealth</p>
-              <p className="text-3xl font-black text-accent font-mono">₹{(roadmapData.target_corpus / 10000000).toFixed(2)}Cr</p>
+              <p className="text-3xl font-black text-accent font-mono">₹{(roadmapData.required_corpus_cr).toFixed(2)}Cr</p>
             </div>
           </div>
 
@@ -103,9 +112,14 @@ export default function FIREPathPlanner() {
                     min="40"
                     max="65"
                     value={formData.retirementAge}
-                    onChange={(e) => setFormData({ ...formData, retirementAge: e.target.value })}
-                    onMouseUp={handleNext}
-                    className="w-full accent-accent"
+                    onChange={(e) => {
+                      const newRetirementAge = e.target.value;
+                      if (parseInt(newRetirementAge) > parseInt(formData.age)) {
+                        setFormData({ ...formData, retirementAge: newRetirementAge });
+                        handleNext();
+                      }
+                    }}
+                    className="w-full accent-accent cursor-pointer"
                   />
                 </div>
                 <div className="space-y-2">
@@ -131,7 +145,8 @@ export default function FIREPathPlanner() {
             <div className="lg:col-span-3 grid md:grid-cols-3 gap-6">
               <div className="blueprint-card">
                 <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-2 font-mono">Monthly SIP Required</p>
-                <p className="text-4xl font-black text-white">₹{Math.round(roadmapData.monthly_sip_required).toLocaleString()}</p>
+                <p className="text-4xl font-black text-white">₹{Math.round(roadmapData.monthly_sip_needed || 0).toLocaleString()}</p>
+
                 <div className="mt-4 flex items-center gap-2 text-xs text-green-400 font-bold italic">
                   <TrendingUp className="w-4 h-4" /> 12% Expected CAGR
                 </div>
