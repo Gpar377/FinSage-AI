@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: finsage-api
+    env: python
+    region: oregon
+    plan: free
+
+    # Build configuration
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+
+    # Environment variables
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: JWT_SECRET
+        scope: project
+        value: $JWT_SECRET
+      - key: FRONTEND_URL
+        scope: project
+        value: $FRONTEND_URL
+
+# Databases (optional - can be added later)
+# databases:
+#   - name: finsage-db
+#     plan: free
+#     region: oregon
