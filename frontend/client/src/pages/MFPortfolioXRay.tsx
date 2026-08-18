@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, FileText, TrendingUp } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function MFPortfolioXRay() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -20,7 +21,7 @@ export default function MFPortfolioXRay() {
     setIsLoading(true);
     try {
       // For hackathon demo, we fetch the sample deterministic portfolio
-      const res = await fetch("http://localhost:8000/api/portfolio/sample");
+      const res = await fetch(`${getApiUrl()}/api/portfolio/sample`);
       const data = await res.json();
       setApiResult(data);
       setShowAnalysis(true);
@@ -33,66 +34,74 @@ export default function MFPortfolioXRay() {
 
   if (showAnalysis && apiResult) {
     const xirrData = apiResult.xirr;
-    const expenseDetails = apiResult.expense_details;
-    const overlapData = apiResult.overlap;
-    const rebalanceData = apiResult.rebalance;
+    const expenseDetails = apiResult.expense_details || [];
+    const overlapData = apiResult.overlap || { overlap_count: 0, top_overlapping_stocks: [] };
+    const rebalancePlan = apiResult.rebalancing || [];
 
     const totalValue = xirrData.funds.reduce((acc: number, f: any) => acc + f.current_value, 0);
-    const avgExpenseRatio = (expenseDetails.reduce((acc: number, e: any) => acc + e.ter_regular, 0) / expenseDetails.length) * 100;
+    const avgExpenseRatio = expenseDetails.length > 0 
+      ? (expenseDetails.reduce((acc: number, e: any) => acc + (e.ter_regular || 0), 0) / expenseDetails.length) * 100 
+      : 0;
 
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
           <div>
-            <h1 className="text-4xl font-black mb-2">Your Portfolio X-Ray</h1>
-            <p className="text-white/60">Complete analysis and optimization recommendations</p>
+            <div className="text-accent font-bold tracking-widest text-xs uppercase mb-2">Institutional X-Ray Analysis</div>
+            <h1 className="text-4xl font-black italic uppercase tracking-tighter">Your Portfolio</h1>
           </div>
 
           {/* Portfolio Overview */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="metric-box">
-              <div className="metric-label">Total Portfolio Value</div>
-              <div className="metric-value">₹{(totalValue / 100000).toFixed(2)}L</div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="blueprint-card border-white/10">
+              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-2 font-mono">Current Value</p>
+              <p className="text-3xl font-black text-white">₹{(totalValue / 100000).toFixed(2)}L</p>
             </div>
-            <div className="metric-box">
-              <div className="metric-label">True XIRR</div>
-              <div className="metric-value">{xirrData.portfolio_xirr.toFixed(1)}%</div>
+            <div className="blueprint-card border-white/10">
+              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-2 font-mono">Portfolio XIRR</p>
+              <p className="text-3xl font-black text-accent">{xirrData.portfolio_xirr.toFixed(1)}%</p>
             </div>
-            <div className="metric-box">
-              <div className="metric-label">Avg Expense Ratio</div>
-              <div className="metric-value">{avgExpenseRatio.toFixed(2)}%</div>
+            <div className="blueprint-card border-white/10">
+              <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mb-2 font-mono">Cost Drag (Avg)</p>
+              <p className="text-3xl font-black text-white">{avgExpenseRatio.toFixed(2)}%</p>
             </div>
           </div>
 
           {/* Holdings Breakdown */}
           <div className="blueprint-card">
-            <h2 className="text-2xl font-bold mb-6">Your Holdings</h2>
-            <div className="space-y-3">
+            <h2 className="text-xl font-black mb-6 uppercase italic">Holding Details & Tax Status</h2>
+            <div className="space-y-4">
               {xirrData.funds.map((fund: any, i: number) => {
                 const allocation = (fund.current_value / totalValue) * 100;
                 const expense = expenseDetails.find((e: any) => e.fund_name === fund.name);
                 return (
-                  <div key={i} className="p-4 bg-white/5 rounded-sm border border-white/10">
+                  <div key={i} className="p-4 bg-white/5 rounded-sm border border-white/10 hover:border-accent/40 transition-colors">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <div className="font-bold">{fund.name}</div>
-                        <div className="text-white/60 text-sm">₹{(fund.current_value / 100000).toFixed(2)}L • {allocation.toFixed(1)}% allocation</div>
+                        <div className="font-bold text-lg">{fund.name}</div>
+                        <div className="text-white/40 text-[10px] uppercase font-bold tracking-widest flex gap-2">
+                          <span>₹{(fund.current_value / 100000).toFixed(2)}L</span>
+                          <span>•</span>
+                          <span className="text-accent">{allocation.toFixed(1)}% Weight</span>
+                          <span>•</span>
+                          <span className={fund.tax_status === 'LTCG' ? 'text-green-400' : 'text-yellow-400'}>{fund.tax_status}</span>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-accent font-bold">{fund.xirr.toFixed(1)}%</div>
-                        <div className="text-white/60 text-sm">XIRR</div>
+                        <div className="text-accent text-xl font-black">{fund.xirr.toFixed(1)}%</div>
+                        <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest italic">XIRR</div>
                       </div>
                     </div>
-                    <div className="blueprint-progress">
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden mb-3">
                       <div
-                        className="blueprint-progress-fill"
+                        className="h-full bg-accent transition-all duration-1000"
                         style={{ width: `${allocation}%` }}
                       />
                     </div>
                     {expense && (
-                      <div className="text-xs text-white/50 mt-2">
-                        TER: {(expense.ter_regular * 100).toFixed(2)}% (Regular) / {(expense.ter_direct * 100).toFixed(2)}% (Direct) 
-                        | Drag = ₹{expense.annual_drag.toLocaleString()}
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-white/40 font-mono">
+                        <div>TER: {(expense.ter_regular * 100).toFixed(2)}% (Regular) / {(expense.ter_direct * 100).toFixed(2)}% (Direct)</div>
+                        <div className="text-red-400/80">Annual Drag: ₹{expense.annual_drag.toLocaleString()}</div>
                       </div>
                     )}
                   </div>
@@ -101,94 +110,56 @@ export default function MFPortfolioXRay() {
             </div>
           </div>
 
-          {/* Overlap Analysis */}
-          <div className="blueprint-card">
-            <h2 className="text-2xl font-bold mb-6">Overlap Analysis</h2>
-            <div className="space-y-3">
-              <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-sm">
-                <div className="font-bold mb-2">⚠️ High Overlap Detected</div>
-                <div className="text-white/60 text-sm mb-3">
-                  Axis Bluechip and ICICI Prudential Midcap have 45% common holdings
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Overlap Analysis */}
+            <div className="blueprint-card">
+              <h2 className="text-xl font-black mb-6 uppercase italic flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                Overlap Analysis
+              </h2>
+              <div className="space-y-4">
+                <div className="p-6 bg-yellow-500/5 border border-yellow-500/20 rounded-sm">
+                  <div className="font-black text-yellow-400 uppercase italic tracking-tighter mb-2">Overlap Severity: {overlapData.overlap_severity}</div>
+                  <div className="text-white/60 text-xs leading-relaxed font-medium italic">
+                    Found {overlapData.overlap_count} overlapping stocks across holdings. Weighted overlap is {overlapData.overlap_weight_pct}%.
+                  </div>
                 </div>
-                <div className="text-accent font-bold">Recommendation: Reduce overlap by diversifying</div>
+                
+                {overlapData.top_overlapping_stocks && overlapData.top_overlapping_stocks.length > 0 && (
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase text-white/40 tracking-widest mb-1">Top Shared Positions</p>
+                      {overlapData.top_overlapping_stocks.slice(0, 3).map((s: any, i: number) => (
+                        <div key={i} className="flex justify-between text-xs py-2 border-b border-white/5 last:border-0 font-mono italic">
+                          <span>{s.stock}</span>
+                          <span className="text-white/60">{s.count} Funds</span>
+                        </div>
+                      ))}
+                   </div>
+                )}
               </div>
-              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-sm">
-                <div className="font-bold mb-2">✓ Good Diversification</div>
-                <div className="text-white/60 text-sm">
-                  Balanced mix of large-cap, mid-cap, and debt funds
-                </div>
+            </div>
+
+            {/* Rebalancing Plan */}
+            <div className="blueprint-card bg-accent/5 border-accent/20">
+              <h2 className="text-xl font-black mb-6 uppercase italic text-accent flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                AI REBALANCING PLAN
+              </h2>
+              <div className="space-y-4">
+                {rebalancePlan.slice(0, 3).map((rec: any, i: number) => (
+                  <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-black bg-accent text-black px-2 py-0.5 uppercase italic">{rec.action}</span>
+                      <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest font-mono italic">{rec.priority} PRIORITY</span>
+                    </div>
+                    <div className="font-bold text-sm mb-1">{rec.fund}</div>
+                    <p className="text-[10px] text-white/50 leading-relaxed italic">{rec.suggestion}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Expense Ratio Drag */}
-          <div className="blueprint-card">
-            <h2 className="text-2xl font-bold mb-6">Expense Ratio Impact</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-sm border border-white/10">
-                <div className="flex justify-between mb-2">
-                  <span>Average Expense Ratio</span>
-                  <span className="text-accent font-bold">0.68%</span>
-                </div>
-                <div className="text-white/60 text-sm mb-3">
-                  Annual cost: ₹1,05,400 (on ₹15.5L portfolio)
-                </div>
-                <div className="blueprint-progress">
-                  <div className="blueprint-progress-fill" style={{ width: "68%" }} />
-                </div>
-              </div>
-              <div className="p-4 bg-accent/10 border-accent/30 rounded-sm">
-                <div className="font-bold mb-2">💡 Optimization Opportunity</div>
-                <div className="text-white/60 text-sm">
-                  Switching to low-cost index funds could save ₹31,000 annually
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Benchmark Comparison */}
-          <div className="blueprint-card">
-            <h2 className="text-2xl font-bold mb-6">Benchmark Comparison</h2>
-            <div className="space-y-3">
-              {[
-                { benchmark: "Your Portfolio XIRR", value: "12.3%", status: "good" },
-                { benchmark: "Nifty 50 XIRR", value: "11.8%", status: "neutral" },
-                { benchmark: "Sensex XIRR", value: "11.2%", status: "neutral" },
-                { benchmark: "Balanced Fund Avg", value: "10.5%", status: "good" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-sm border border-white/10">
-                  <span className="font-semibold">{item.benchmark}</span>
-                  <span className={item.status === "good" ? "text-green-400 font-bold" : "text-white/60 font-bold"}>
-                    {item.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rebalancing Plan */}
-          <div className="blueprint-card bg-accent/10 border-accent/30">
-            <h2 className="text-2xl font-bold mb-6">AI-Generated Rebalancing Plan</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-sm border border-white/10">
-                <div className="font-bold mb-2">Current vs Recommended</div>
-                <div className="text-white/60 text-sm">
-                  The portfolio demonstrates a {Math.abs(rebalanceData.equity_deviation * 100).toFixed(0)}% deviation from the model target.
-                </div>
-              </div>
-              <div className="p-4 bg-white/5 rounded-sm border border-white/10">
-                <div className="font-bold mb-2">Action Items</div>
-                <ul className="text-white/60 text-sm space-y-2">
-                  {rebalanceData.rebalance_actions.map((action: any, i: number) => (
-                    <li key={i}>• {action.action} {action.asset_class} by ₹{Math.abs(action.amount).toLocaleString()}</li>
-                  ))}
-                  {overlapData.overlap_count > 0 && (
-                    <li className="text-yellow-400 mt-2">⚠️ Review top overlapping stocks: {overlapData.top_overlapping_stocks.slice(0, 3).map((s: any) => s.stock).join(", ")}</li>
-                  )}
-                </ul>
-              </div>
-            </div>
-          </div>
 
           {/* Performance Metrics */}
           <div className="blueprint-card">
