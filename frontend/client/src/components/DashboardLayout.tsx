@@ -21,15 +21,18 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { Activity, Calculator, LayoutDashboard, LogOut, PanelLeft, PieChart, Receipt, TrendingUp, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Calculator, label: "Tax Wizard", path: "/tax-wizard" },
+  { icon: PieChart, label: "Portfolio X-Ray", path: "/portfolio-xray" },
+  { icon: TrendingUp, label: "FIRE Path Planner", path: "/fire-path-planner" },
+  { icon: Activity, label: "Money Health Score", path: "/health-score" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -199,6 +202,18 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+            {!isCollapsed && (
+              <div className="mt-auto p-4 border-t border-white/5">
+                <div className="blueprint-card p-3 bg-red-400/5 border-red-400/20">
+                  <p className="text-[10px] leading-tight text-white/40 uppercase tracking-widest font-black mb-1">
+                    SEBI Disclaimer
+                  </p>
+                  <p className="text-[10px] leading-relaxed text-white/30">
+                    Investment in securities market are subject to market risks. Read all the related documents carefully before investing. FinSage AI is a demo terminal for educational purposes.
+                  </p>
+                </div>
+              </div>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="p-3">
