@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, FileText, CheckCircle2, ChevronRight } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function TaxWizard() {
   const [step, setStep] = useState(0);
@@ -45,7 +46,7 @@ export default function TaxWizard() {
           sec_24b: parseFloat(salaryData.homeLoanInterest),
         };
 
-        const res = await fetch("http://localhost:8000/api/tax/calculate", {
+        const res = await fetch(`${getApiUrl()}/api/tax/calculate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
