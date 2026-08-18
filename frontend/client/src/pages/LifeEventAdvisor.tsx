@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function LifeEventAdvisor() {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
@@ -116,7 +117,7 @@ export default function LifeEventAdvisor() {
     if (!selectedEvent) return;
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/life-event/advice", {
+      const res = await fetch(`${getApiUrl()}/api/life-event/advice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
