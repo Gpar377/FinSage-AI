@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function MoneyHealthScore() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -89,13 +90,16 @@ export default function MoneyHealthScore() {
           age: 30
         };
 
-        const res = await fetch("http://localhost:8000/api/health-score/calculate", {
+        const res = await fetch(`${getApiUrl()}/api/health-score/calculate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
         setApiResult(data);
+        if (data.overall_score) {
+          localStorage.setItem("finsage_health_score", data.overall_score.toString());
+        }
         setShowResults(true);
       } catch (err) {
         console.error("API Error:", err);
