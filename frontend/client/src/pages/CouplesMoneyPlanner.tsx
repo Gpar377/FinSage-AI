@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users } from "lucide-react";
+import { getApiUrl } from "@/config/api";
 
 export default function CouplesMoneyPlanner() {
   const [step, setStep] = useState(0);
@@ -54,7 +55,7 @@ export default function CouplesMoneyPlanner() {
           joint_goals: "Retirement"
         };
 
-        const res = await fetch("http://localhost:8000/api/couples/optimize", {
+        const res = await fetch(`${getApiUrl()}/api/couples/optimize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
