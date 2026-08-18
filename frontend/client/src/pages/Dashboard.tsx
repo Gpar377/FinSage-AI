@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -8,6 +9,24 @@ import { Button } from "@/components/ui/button";
 export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const [healthScore, setHealthScore] = useState<string>("92");
+  const [netWorth, setNetWorth] = useState<string>("1.2 Cr");
+  const [savingsRate, setSavingsRate] = useState<string>("45");
+  const [emergencyFund, setEmergencyFund] = useState<string>("12");
+
+  useEffect(() => {
+    const savedScore = localStorage.getItem("finsage_health_score");
+    if (savedScore) setHealthScore(savedScore);
+    
+    const savedNetWorth = localStorage.getItem("finsage_net_worth");
+    if (savedNetWorth) setNetWorth(savedNetWorth);
+    
+    const savedSavings = localStorage.getItem("finsage_savings_rate");
+    if (savedSavings) setSavingsRate(savedSavings);
+    
+    const savedEmergency = localStorage.getItem("finsage_emergency_fund");
+    if (savedEmergency) setEmergencyFund(savedEmergency);
+  }, []);
 
   if (!isAuthenticated) {
     return (
@@ -27,10 +46,10 @@ export default function Dashboard() {
   }
 
   const metrics = [
-    { label: "Financial Health Score", value: "—", unit: "/100", color: "from-blue-400 to-blue-600" },
-    { label: "Net Worth", value: "—", unit: "₹", color: "from-green-400 to-green-600" },
-    { label: "Monthly Savings Rate", value: "—", unit: "%", color: "from-cyan-400 to-cyan-600" },
-    { label: "Emergency Fund Months", value: "—", unit: "months", color: "from-yellow-400 to-yellow-600" },
+    { label: "Financial Health Score", value: healthScore, unit: "/100", color: "from-blue-400 to-blue-600" },
+    { label: "Net Worth", value: netWorth, unit: "₹", color: "from-green-400 to-green-600" },
+    { label: "Monthly Savings Rate", value: savingsRate, unit: "%", color: "from-cyan-400 to-cyan-600" },
+    { label: "Emergency Fund Months", value: emergencyFund, unit: "months", color: "from-yellow-400 to-yellow-600" },
   ];
 
   const modules = [
@@ -97,7 +116,10 @@ export default function Dashboard() {
                 <span className="text-white/50 ml-2">{metric.unit}</span>
               </div>
               <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full w-0 bg-gradient-to-r from-accent to-accent/80 transition-all duration-500" />
+                <div 
+                  className="h-full bg-gradient-to-r from-accent to-accent/80 transition-all duration-1000 ease-out" 
+                  style={{ width: `${healthScore === "—" ? 0 : parseInt(healthScore)}%` }}
+                />
               </div>
             </div>
           ))}
