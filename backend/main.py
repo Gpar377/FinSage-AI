@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from routers import auth, fire, tax, portfolio, health_score, life_event, couples
-from core.config import APP_NAME, APP_VERSION, FRONTEND_URL
+from core.config import APP_NAME, APP_VERSION, ALLOWED_ORIGINS
 from compliance.guard import get_disclaimer
 import time
 
@@ -23,13 +23,7 @@ app = FastAPI(
 # ── CORS ────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        FRONTEND_URL,
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
